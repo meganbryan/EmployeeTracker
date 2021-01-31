@@ -14,18 +14,70 @@ const init = () => {
         .prompt({
             name: "action",
             type: "list",
-            message: "Would you like to add?",
-            choices: ["DEPARTMENT", "ROLE", "EMPLOYEE"]
+            message: "Would you like to do?",
+            choices: ["ADD", "VIEW", "UPDATE EMPLOYEE ROLES", "END"]
         })
         .then((answer) => {
-            if (answer.action === "DEPARTMENT") {
+            if (answer.action === "ADD") {
+                addSomething ();
+            } 
+            else if (answer.action === "VIEW") {
+                viewSomething();
+            } 
+            else if (answer.action === "UPDATE") {
+                console.log("update roles");
+                connection.end();
+            } 
+            else {
+                connection.end();
+            }
+        });
+};
+
+const addSomething = () => {
+    inquirer
+        .prompt({
+            name: "add_type",
+            type: "list",
+            message: "What category would you like to add?",
+            choices: ["DEPARTMENT", "ROLE", "EMPLOYEE", "CANCEL"]
+        })
+        .then((answer) => {
+            if (answer.add_type === "DEPARTMENT") {
                 addDepartment ();
             } 
-            else if (answer.action === "ROLE") {
+            else if (answer.add_type === "ROLE") {
                 addRole();
             } 
-            else if (answer.action === "EMPLOYEE") {
+            else if (answer.add_type === "EMPLOYEE") {
                 addEmployee ();
+            } 
+            else {
+                connection.end();
+            }
+        });
+};
+
+const viewSomething = () => {
+    inquirer
+        .prompt({
+            name: "view_type",
+            type: "list",
+            message: "What category would you like to view?",
+            choices: ["DEPARTMENT", "ROLE", "EMPLOYEE", "CANCEL"]
+        })
+        .then((answer) => {
+            if (answer.view_type === "DEPARTMENT") {
+                console.log("view departments");
+                connection.end();
+            } 
+            else if (answer.view_type === "ROLE") {
+                console.log("view roles");
+                connection.end();
+            } 
+            else if (answer.view_type === "EMPLOYEE") {
+                console.log("view employees");
+                connection.end();
             } 
             else {
                 connection.end();
