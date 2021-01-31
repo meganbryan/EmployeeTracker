@@ -15,7 +15,7 @@ const init = () => {
             name: "action",
             type: "list",
             message: "Would you like to do?",
-            choices: ["ADD", "VIEW", "UPDATE EMPLOYEE ROLES", "END"]
+            choices: ["ADD", "VIEW", "UPDATE", "END"]
         })
         .then((answer) => {
             if (answer.action === "ADD") {
@@ -31,6 +31,24 @@ const init = () => {
             else {
                 connection.end();
             }
+        });
+};
+
+const viewSomething = () => {
+    inquirer
+        .prompt({
+            name: "view_type",
+            type: "list",
+            message: "What category would you like to view?",
+            choices: ["DEPARTMENT", "ROLE", "EMPLOYEE", "CANCEL"]
+        })
+        .then((answer) => {
+            const queryString = 'SELECT * FROM ' + answer.view_type
+            connection.query(queryString, (err, results) => {
+                if (err) throw err;
+                console.table(results)
+                init();
+            });
         });
 };
 
@@ -51,33 +69,6 @@ const addSomething = () => {
             } 
             else if (answer.add_type === "EMPLOYEE") {
                 addEmployee ();
-            } 
-            else {
-                connection.end();
-            }
-        });
-};
-
-const viewSomething = () => {
-    inquirer
-        .prompt({
-            name: "view_type",
-            type: "list",
-            message: "What category would you like to view?",
-            choices: ["DEPARTMENT", "ROLE", "EMPLOYEE", "CANCEL"]
-        })
-        .then((answer) => {
-            if (answer.view_type === "DEPARTMENT") {
-                console.log("view departments");
-                connection.end();
-            } 
-            else if (answer.view_type === "ROLE") {
-                console.log("view roles");
-                connection.end();
-            } 
-            else if (answer.view_type === "EMPLOYEE") {
-                console.log("view employees");
-                connection.end();
             } 
             else {
                 connection.end();
