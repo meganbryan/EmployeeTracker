@@ -22,7 +22,7 @@ const init = () => {
                 addDepartment ();
             } 
             else if (answer.action === "ROLE") {
-                console.log("ADD ROLE");
+                addRole();
             } 
             else if (answer.action === "EMPLOYEE") {
                 console.log("ADD EMPLOYEE");
@@ -57,6 +57,48 @@ const addDepartment = () => {
             (err) => {
                 if (err) throw err;
                 console.log('Department created successfully.');
+                init();
+            }
+        );
+    });
+};
+
+const addRole = () => {
+    inquirer
+        .prompt([
+            {
+                name: 'role_id',
+                type: 'input',
+                message: 'What is the id for the role?',
+            },
+            {
+                name: 'role_title',
+                type: 'input',
+                message: 'What is the title of the role?',
+            },
+            {
+                name: 'salary',
+                type: 'input',
+                message: 'What is the salary for the role?',
+            },
+            {
+                name: 'dept_id',
+                type: 'input',
+                message: 'What is the id of the department?',
+            }
+        ])
+    .then((answer) => {
+        connection.query(
+            'INSERT INTO role SET ?',
+            {
+                id: answer.role_id,
+                title: answer.role_title,
+                salary: answer.salary,
+                department_id: answer.dept_id
+            },
+            (err) => {
+                if (err) throw err;
+                console.log('Role created successfully.');
                 init();
             }
         );
