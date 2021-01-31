@@ -19,7 +19,7 @@ const init = () => {
         })
         .then((answer) => {
             if (answer.action === "DEPARTMENT") {
-                console.log("ADD DEPARTMENT");
+                addDepartment ();
             } 
             else if (answer.action === "ROLE") {
                 console.log("ADD ROLE");
@@ -31,6 +31,36 @@ const init = () => {
                 connection.end();
             }
         });
+};
+
+const addDepartment = () => {
+    inquirer
+        .prompt([
+            {
+                name: 'dept_id',
+                type: 'input',
+                message: 'What is the department id?',
+            },
+            {
+                name: 'dept_name',
+                type: 'input',
+                message: 'What is the department name?',
+            }
+        ])
+    .then((answer) => {
+        connection.query(
+            'INSERT INTO department SET ?',
+            {
+                id: answer.dept_id,
+                name: answer.dept_name
+            },
+            (err) => {
+                if (err) throw err;
+                console.log('Department created successfully.');
+                init();
+            }
+        );
+    });
 };
 
 connection.connect((err) => {
