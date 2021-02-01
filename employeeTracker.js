@@ -26,7 +26,7 @@ const init = () => {
                 viewSomething();
             } 
             else if (answer.action === "UPDATE ROLE") {
-                updateRoles();
+                updateRole ();
             } 
             else {
                 connection.end();
@@ -34,7 +34,7 @@ const init = () => {
         });
 };
 
-const updateRoles = () => {
+const updateRole = () => {
     connection.query('SELECT first_name,last_name FROM employee', (err, results) => {
     inquirer
         .prompt([
@@ -82,15 +82,21 @@ const updateRoles = () => {
 }
 
 const viewSomething = () => {
+    let queryString = ""
     inquirer
         .prompt({
             name: "view_type",
             type: "list",
             message: "What category would you like to view?",
-            choices: ["DEPARTMENT", "ROLE", "EMPLOYEE", "CANCEL"]
+            choices: ["DEPARTMENT", "ROLE", "EMPLOYEE"]
         })
         .then((answer) => {
-            const queryString = 'SELECT * FROM ' + answer.view_type
+            if (answer.view_type === "EMPLOYEE") {
+                queryString = "SELECT employee.id AS `ID`, CONCAT_WS(', ', last_name, first_name) AS `Name`, role.title AS `Role`, role.salary AS `Salary`, role.department_id AS `Department`, manager_id AS `Manager` FROM employee RIGHT JOIN role ON employee.role_id = role.id ORDER BY `Name`"
+            }
+            else {
+                queryString = 'SELECT * FROM ' + answer.view_type + ' ORDER BY `id`'
+            }
             connection.query(queryString, (err, results) => {
                 if (err) throw err;
                 console.table(results)
@@ -129,7 +135,7 @@ const addDepartment = () => {
             {
                 name: 'dept_id',
                 type: 'input',
-                message: 'What is the department id?'
+                message: 'What is the department id number?'
             },
             {
                 name: 'dept_name',
@@ -174,7 +180,7 @@ const addRole = () => {
             {
                 name: 'dept_id',
                 type: 'input',
-                message: 'What is the id of the department?'
+                message: 'What is the id number of the department?'
             }
         ])
     .then((answer) => {
@@ -216,12 +222,12 @@ const addEmployee = () => {
             {
                 name: 'role_id',
                 type: 'input',
-                message: 'What is the id for their role?'
+                message: 'What is the id number for their role?'
             },
             {
                 name: 'manager',
                 type: 'input',
-                message: 'What is the id of their manager?'
+                message: 'What is the id number of their manager?'
             }
         ])
     .then((answer) => {
