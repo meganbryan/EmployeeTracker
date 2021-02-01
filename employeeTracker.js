@@ -1,5 +1,6 @@
 const mysql = require("mysql");
 const inquirer = require("inquirer");
+const CTable = require("console.table")
 
 const connection = mysql.createConnection({
     host: "localhost",
@@ -15,7 +16,7 @@ const init = () => {
             name: "action",
             type: "list",
             message: "Would you like to do?",
-            choices: ["ADD", "VIEW", "UPDATE", "END"]
+            choices: ["ADD", "VIEW", "UPDATE ROLE", "END"]
         })
         .then((answer) => {
             if (answer.action === "ADD") {
@@ -24,15 +25,61 @@ const init = () => {
             else if (answer.action === "VIEW") {
                 viewSomething();
             } 
-            else if (answer.action === "UPDATE") {
-                console.log("update roles");
-                connection.end();
+            else if (answer.action === "UPDATE ROLE") {
+                updateRoles();
             } 
             else {
                 connection.end();
             }
         });
 };
+
+const updateRoles = () => {
+    connection.query('SELECT first_name,last_name FROM employee', (err, results) => {
+    inquirer
+        .prompt([
+            {
+                name: 'choice',
+                type: 'list',
+                choices() {
+                    const choiceArray = [];
+                    results.forEach(({ first_name, last_name }) => {
+                        choiceArray.push(`${last_name}, ${first_name}`);
+                    });
+                    return choiceArray;
+                },
+                message: 'Update role for which employee?',
+            },
+            {
+                name: 'role_id',
+                type: 'input',
+                message: 'What would you like their new role ID to be?'
+            }
+        ])
+        .then((answer) => {
+            let ansArray = answer.choice.split(', ')
+            const query = connection.query(
+                'UPDATE employee SET ? WHERE ? AND ?', 
+                [
+                    {
+                        role_id: answer.role_id
+                    },
+                    {
+                        last_name: ansArray[0]
+                    },
+                    {
+                        first_name: ansArray[1]
+                    }
+                ], 
+                (err, res) => {
+                    if (err) throw err;
+                    init();
+                }
+            );
+            console.log(query.sql);
+        });
+    })
+}
 
 const viewSomething = () => {
     inquirer
@@ -154,7 +201,7 @@ const addEmployee = () => {
             {
                 name: 'employee_id',
                 type: 'input',
-                message: 'What is their id?'
+                message: 'What is their id number?'
             },
             {
                 name: 'first_name',
