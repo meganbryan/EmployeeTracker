@@ -44,6 +44,12 @@ VALUES (36, "Mechanic", "50000", 10);
 INSERT INTO department (id, name)
 VALUES (10, "Production");
 
-SELECT employee.id, first_name, last_name, role.title, role.salary, role.department_id, manager_id
+SELECT employee.id AS `ID`, CONCAT_WS(', ', employee.last_name, employee.first_name) AS `Name`, role.title AS `Role`, role.salary AS `Salary`, department.name AS `Department`, CONCAT_WS(', ', managerInfo.last_name, managerInfo.first_name) AS `Manager`
 FROM employee
-RIGHT JOIN role ON employee.role_id = role.id;
+RIGHT JOIN role ON employee.role_id = role.id
+LEFT JOIN department on role.department_id = department.id
+LEFT JOIN employee AS managerInfo on employee.manager_id = managerInfo.id;
+
+SELECT *
+FROM role
+INNER JOIN department on role.department_id = department.id;

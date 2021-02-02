@@ -92,10 +92,13 @@ const viewSomething = () => {
         })
         .then((answer) => {
             if (answer.view_type === "EMPLOYEE") {
-                queryString = "SELECT employee.id AS `ID`, CONCAT_WS(', ', last_name, first_name) AS `Name`, role.title AS `Role`, role.salary AS `Salary`, role.department_id AS `Department`, manager_id AS `Manager` FROM employee RIGHT JOIN role ON employee.role_id = role.id ORDER BY `Name`"
+                queryString = "SELECT employee.id AS `ID`, CONCAT_WS(', ', employee.last_name, employee.first_name) AS `Name`, role.title AS `Role`, role.salary AS `Salary`, department.name AS `Department`, CONCAT_WS(', ', managerInfo.last_name, managerInfo.first_name) AS `Manager` FROM employee INNER JOIN role ON employee.role_id = role.id LEFT JOIN department on role.department_id = department.id LEFT JOIN employee AS managerInfo on employee.manager_id = managerInfo.id ORDER by `Name`;"
+            }
+            else if (answer.view_type === "ROLE"){
+                queryString = 'SELECT role.id AS `ID`,  role.title AS `Role`, role.salary AS `Salary`, department.name AS `Department` FROM role INNER JOIN department on role.department_id = department.id ORDER BY `id`'
             }
             else {
-                queryString = 'SELECT * FROM ' + answer.view_type + ' ORDER BY `id`'
+                queryString = 'SELECT department.id AS `ID`, department.name AS `Department` FROM department ORDER BY `ID`'
             }
             connection.query(queryString, (err, results) => {
                 if (err) throw err;
