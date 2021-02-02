@@ -4,6 +4,7 @@
   "description": "This is an application that allows a company to manage their employees.",
   "main": "employeeTracker.js",
   "scripts": {
+    "start": "node server.js",
     "test": "echo \"Error: no test specified\" && exit 1"
   },
   "repository": {
