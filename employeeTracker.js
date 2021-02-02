@@ -2,6 +2,68 @@ const mysql = require("mysql");
 const inquirer = require("inquirer");
 const CTable = require("console.table")
 
+const deptPrompt = [
+    {
+        name: 'dept_id',
+        type: 'input',
+        message: 'What is the department id number?'
+    },
+    {
+        name: 'dept_name',
+        type: 'input',
+        message: 'What is the department name?'
+    }
+];
+const rolePrompt = [
+    {
+        name: 'role_id',
+        type: 'input',
+        message: 'What is the id for the role?'
+    },
+    {
+        name: 'role_title',
+        type: 'input',
+        message: 'What is the title of the role?'
+    },
+    {
+        name: 'salary',
+        type: 'input',
+        message: 'What is the salary for the role?'
+    },
+    {
+        name: 'dept_id',
+        type: 'input',
+        message: 'What is the id number of the department?'
+    }
+];
+const emplPrompt = [
+    {
+        name: 'employee_id',
+        type: 'input',
+        message: 'What is their id number?'
+    },
+    {
+        name: 'first_name',
+        type: 'input',
+        message: 'What is their first name?'
+    },
+    {
+        name: 'last_name',
+        type: 'input',
+        message: 'What is their last name?'
+    },
+    {
+        name: 'role_id',
+        type: 'input',
+        message: 'What is the id number for their role?'
+    },
+    {
+        name: 'manager',
+        type: 'input',
+        message: 'What is the id number of their manager?'
+    }
+];
+
 const connection = mysql.createConnection({
     host: "localhost",
     port: 3306,
@@ -20,10 +82,10 @@ const init = () => {
         })
         .then((answer) => {
             if (answer.action === "ADD") {
-                addSomething ();
+                addCategory ();
             } 
             else if (answer.action === "VIEW") {
-                viewSomething();
+                viewCategory();
             } 
             else if (answer.action === "UPDATE ROLE") {
                 updateRole ();
@@ -79,9 +141,9 @@ const updateRole = () => {
             console.log(query.sql);
         });
     })
-}
+};
 
-const viewSomething = () => {
+const viewCategory = () => {
     let queryString = ""
     inquirer
         .prompt({
@@ -108,7 +170,7 @@ const viewSomething = () => {
         });
 };
 
-const addSomething = () => {
+const addCategory = () => {
     inquirer
         .prompt({
             name: "add_type",
@@ -118,13 +180,13 @@ const addSomething = () => {
         })
         .then((answer) => {
             if (answer.add_type === "DEPARTMENT") {
-                addDepartment ();
+                addQuery (answer, deptPrompt);
             } 
             else if (answer.add_type === "ROLE") {
-                addRole();
+                addQuery (answer, rolePrompt);
             } 
             else if (answer.add_type === "EMPLOYEE") {
-                addEmployee ();
+                addQuery (answer, emplPrompt);
             } 
             else {
                 connection.end();
@@ -132,120 +194,40 @@ const addSomething = () => {
         });
 };
 
-const addDepartment = () => {
-    inquirer
-        .prompt([
-            {
-                name: 'dept_id',
-                type: 'input',
-                message: 'What is the department id number?'
-            },
-            {
-                name: 'dept_name',
-                type: 'input',
-                message: 'What is the department name?'
-            }
-        ])
+const addQuery = (answer, categoryPrompt) => {
+    const categoryAns = answer.add_type;
+    let setObj = []
+    inquirer.prompt(categoryPrompt)
     .then((answer) => {
-        connection.query(
-            'INSERT INTO department SET ?',
-            {
+        if (categoryAns === "DEPARTMENT") {
+            setObj = {
                 id: answer.dept_id,
                 name: answer.dept_name
-            },
-            (err) => {
-                if (err) throw err;
-                console.log('Department created successfully.');
-                init();
             }
-        );
-    });
-};
-
-const addRole = () => {
-    inquirer
-        .prompt([
-            {
-                name: 'role_id',
-                type: 'input',
-                message: 'What is the id for the role?'
-            },
-            {
-                name: 'role_title',
-                type: 'input',
-                message: 'What is the title of the role?'
-            },
-            {
-                name: 'salary',
-                type: 'input',
-                message: 'What is the salary for the role?'
-            },
-            {
-                name: 'dept_id',
-                type: 'input',
-                message: 'What is the id number of the department?'
-            }
-        ])
-    .then((answer) => {
-        connection.query(
-            'INSERT INTO role SET ?',
-            {
+        } 
+        else if (categoryAns === "ROLE") {
+            setObj = {
                 id: answer.role_id,
                 title: answer.role_title,
                 salary: answer.salary,
                 department_id: answer.dept_id
-            },
-            (err) => {
-                if (err) throw err;
-                console.log('Role created successfully.');
-                init();
             }
-        );
-    });
-};
-
-const addEmployee = () => {
-    inquirer
-        .prompt([
-            {
-                name: 'employee_id',
-                type: 'input',
-                message: 'What is their id number?'
-            },
-            {
-                name: 'first_name',
-                type: 'input',
-                message: 'What is their first name?'
-            },
-            {
-                name: 'last_name',
-                type: 'input',
-                message: 'What is their last name?'
-            },
-            {
-                name: 'role_id',
-                type: 'input',
-                message: 'What is the id number for their role?'
-            },
-            {
-                name: 'manager',
-                type: 'input',
-                message: 'What is the id number of their manager?'
-            }
-        ])
-    .then((answer) => {
-        connection.query(
-            'INSERT INTO employee SET ?',
-            {
+        } 
+        else if (categoryAns === "EMPLOYEE") {
+            setObj = {
                 id: answer.role_id,
                 first_name: answer.first_name,
                 last_name: answer.last_name,
                 role_id: answer.role_id,
                 manager_id: answer.manager
-            },
+            }
+        } 
+        connection.query(
+            "INSERT INTO " + categoryAns + " SET ?",
+            setObj,
             (err) => {
                 if (err) throw err;
-                console.log('Employee created successfully.');
+                console.log(`${categoryAns} CREATED SUCESSFULLY.`);
                 init();
             }
         );
