@@ -27,10 +27,13 @@ INSERT INTO employee (id, first_name, last_name, role_id, manager_id)
 VALUES (1, "Megan", "Bryan", 12, null);
 
 INSERT INTO employee (id, first_name, last_name, role_id, manager_id)
-VALUES (2, "Jack", "Sherman", 24, 1);
+VALUES (2, "Laura", "Smith", 36, 1);
 
 INSERT INTO employee (id, first_name, last_name, role_id, manager_id)
-VALUES (3, "Lucy", "Lippincott", 36, 1);
+VALUES (3, "Jack", "Sherman", 24, 2);
+
+INSERT INTO employee (id, first_name, last_name, role_id, manager_id)
+VALUES (4, "Lucy", "Lippincott", 36, 2);
 
 INSERT INTO role (id, title, salary, department_id)
 VALUES (12, "Manager", "70000", 10);
@@ -50,6 +53,6 @@ RIGHT JOIN role ON employee.role_id = role.id
 LEFT JOIN department on role.department_id = department.id
 LEFT JOIN employee AS managerInfo on employee.manager_id = managerInfo.id;
 
-SELECT *
+SELECT role.id AS `ID`,  role.title AS `Role`, role.salary AS `Salary`, department.name AS `Department`
 FROM role
 INNER JOIN department on role.department_id = department.id;
