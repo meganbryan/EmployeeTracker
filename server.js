@@ -218,24 +218,57 @@ const viewCategory = () => {
             name: "view_type",
             type: "list",
             message: "What category would you like to view?",
-            choices: ["DEPARTMENT", "ROLE", "EMPLOYEE"]
+            choices: ["DEPARTMENT", "ROLE", "EMPLOYEE", "BY MANAGER"]
         })
         .then((answer) => {
             if (answer.view_type === "EMPLOYEE") {
                 queryString = "SELECT employee.id AS `ID`, CONCAT_WS(', ', employee.last_name, employee.first_name) AS `Name`, role.title AS `Role`, role.salary AS `Salary`, department.name AS `Department`, CONCAT_WS(', ', managerInfo.last_name, managerInfo.first_name) AS `Manager` FROM employee INNER JOIN role ON employee.role_id = role.id LEFT JOIN department on role.department_id = department.id LEFT JOIN employee AS managerInfo on employee.manager_id = managerInfo.id ORDER by `Name`;"
+                connectionView(queryString)
             }
             else if (answer.view_type === "ROLE"){
                 queryString = 'SELECT role.id AS `ID`,  role.title AS `Role`, role.salary AS `Salary`, department.name AS `Department` FROM role INNER JOIN department on role.department_id = department.id ORDER BY `id`'
+                connectionView(queryString)
+            }
+            else if (answer.view_type === "DEPARTMENT"){
+                queryString = 'SELECT department.id AS `ID`, department.name AS `Department` FROM department ORDER BY `ID`'
+                connectionView(queryString)
             }
             else {
-                queryString = 'SELECT department.id AS `ID`, department.name AS `Department` FROM department ORDER BY `ID`'
-            }
-            connection.query(queryString, (err, results) => {
-                if (err) throw err;
-                console.table(results)
-                init();
-            });
+                byManager() 
+            };
         });
+};
+
+const byManager  = () => {
+    connection.query("SELECT CONCAT_WS(', ', employee.last_name, employee.first_name) AS `Name`, employee.id AS `ID` FROM employee WHERE role_id = '12' ORDER by `Name`", (err, results) => {
+        inquirer
+            .prompt({   
+                        name: 'manager',
+                        type: 'list',
+                        choices() {
+                            const choiceArray = [];
+                            results.forEach(({ Name, ID }) => {
+                                choiceArray.push(`${Name}, ${ID}`);
+                            });
+                            return choiceArray;
+                        },
+                        message: 'View by which manager?'
+                    })
+            .then((answer) => {
+                let ansArrayManager = answer.manager.split(', ')
+                const queryString = `SELECT employee.id AS 'ID', CONCAT_WS(', ', employee.last_name, employee.first_name) AS 'Name', role.title AS 'Role', role.salary AS 'Salary', department.name AS 'Department', CONCAT_WS(', ', managerInfo.last_name, managerInfo.first_name) AS 'Manager' FROM employee INNER JOIN role ON employee.role_id = role.id LEFT JOIN department on role.department_id = department.id LEFT JOIN employee AS managerInfo on employee.manager_id = managerInfo.id WHERE employee.manager_id = '${ansArrayManager[2]}' ORDER by 'Name'`
+                console.log(queryString)
+                connectionView(queryString)
+            });
+    }); 
+}
+
+const connectionView = (queryString) => {
+    connection.query(queryString, (err, results) => {
+        if (err) throw err;
+        console.table(results)
+        init();
+    })
 };
 
 const addCategory = () => {
@@ -283,7 +316,7 @@ const addQuery = (answer, categoryPrompt) => {
         } 
         else if (categoryAns === "EMPLOYEE") {
             setObj = {
-                id: answer.role_id,
+                id: answer.employee_id,
                 first_name: answer.first_name,
                 last_name: answer.last_name,
                 role_id: answer.role_id,
