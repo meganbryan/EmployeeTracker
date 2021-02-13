@@ -1,68 +1,10 @@
 const mysql = require("mysql");
 const inquirer = require("inquirer");
 const CTable = require("console.table")
-
-const deptPrompt = [
-    {
-        name: 'dept_id',
-        type: 'input',
-        message: 'What is the department id number?'
-    },
-    {
-        name: 'dept_name',
-        type: 'input',
-        message: 'What is the department name?'
-    }
-];
-const rolePrompt = [
-    {
-        name: 'role_id',
-        type: 'input',
-        message: 'What is the id for the role?'
-    },
-    {
-        name: 'role_title',
-        type: 'input',
-        message: 'What is the title of the role?'
-    },
-    {
-        name: 'salary',
-        type: 'input',
-        message: 'What is the salary for the role?'
-    },
-    {
-        name: 'dept_id',
-        type: 'input',
-        message: 'What is the id number of the department?'
-    }
-];
-const emplPrompt = [
-    {
-        name: 'employee_id',
-        type: 'input',
-        message: 'What is their id number?'
-    },
-    {
-        name: 'first_name',
-        type: 'input',
-        message: 'What is their first name?'
-    },
-    {
-        name: 'last_name',
-        type: 'input',
-        message: 'What is their last name?'
-    },
-    {
-        name: 'role_id',
-        type: 'input',
-        message: 'What is the id number for their role?'
-    },
-    {
-        name: 'manager',
-        type: 'input',
-        message: 'What is the id number of their manager?'
-    }
-];
+let empArray = []
+let roleArray = []
+let managerArray = []
+let deptArray = [] 
 
 const connection = mysql.createConnection({
     host: "localhost",
@@ -72,12 +14,45 @@ const connection = mysql.createConnection({
     database: "employee_DB"
 });
 
+const initQueries = () => {
+    connection.query("SELECT CONCAT_WS(', ', employee.last_name, employee.first_name) AS `Name`, employee.id AS `ID` FROM employee ORDER by `Name`", (err, results) => {
+        empResults = 
+        empArray = [];
+        results.forEach(({ Name, ID }) => {
+            empArray.push(`${ID}: ${Name}`);
+        });
+        return empArray;
+    })
+    connection.query("SELECT role.title AS `Title`, role.id AS `ID` FROM role ORDER by `ID`", (err, results) => {
+        roleArray = [];
+        results.forEach(({ Title, ID }) => {
+            roleArray.push(`${ID}: ${Title}`);
+        });
+        return roleArray;
+    })
+    connection.query("SELECT CONCAT_WS(', ', employee.last_name, employee.first_name) AS `Name`, employee.id AS `ID` FROM employee WHERE employee.role_id = 12 ORDER by `Name`", (err, results) => {
+        managerArray = [];
+        results.forEach(({ Name, ID }) => {
+            managerArray.push(`${ID}: ${Name}`);
+        });
+        return managerArray;
+    })
+    connection.query("SELECT department.name AS `Department`, department.id AS `ID` FROM department ORDER by `ID`", (err, results) => {
+        deptArray = [];
+        results.forEach(({ Department, ID }) => {
+            deptArray.push(`${ID}: ${Department}`);
+        });
+        return deptArray;
+    })
+    init ()
+}
+
 const init = () => {
     inquirer
         .prompt({
             name: "action",
             type: "list",
-            message: "Would you like to do?",
+            message: "What would you like to do?",
             choices: ["ADD", "VIEW", "UPDATE", "END"]
         })
         .then((answer) => {
@@ -95,7 +70,6 @@ const init = () => {
             }
         });
 };
-
 
 const updateCategory = () => {
     inquirer
@@ -116,98 +90,85 @@ const updateCategory = () => {
 }
 
 const updateRole  = () => {
-    connection.query("SELECT CONCAT_WS(', ', employee.last_name, employee.first_name) AS `Name` FROM employee ORDER by `Name`", (err, results) => {
     inquirer
         .prompt([
             {
                 name: 'choice',
                 type: 'list',
-                choices() {
-                    const choiceArray = [];
-                    results.forEach(({ Name }) => {
-                        choiceArray.push(Name);
-                    });
-                    return choiceArray;
-                },
+                choices: empArray,
                 message: 'Update role for which employee?',
             },
             {
                 name: 'role_id',
-                type: 'input',
-                message: 'What would you like their new role ID to be?'
-            }
-        ])
+                type: 'list',
+                choices: roleArray,
+                message: 'What would you like their new role to be?'
+            }]
+        )
         .then((answer) => {
-            let ansArray = answer.choice.split(', ')
-            const query = connection.query(
+            let empAnswer = answer.choice.split(':').join(',').split(', ')
+            let roleAnswer = answer.role_id.split(':').join(',').split(', ')
+            connection.query(
                 'UPDATE employee SET ? WHERE ? AND ?', 
                 [
                     {
-                        role_id: answer.role_id
+                        role_id: roleAnswer[0]
                     },
                     {
-                        last_name: ansArray[0]
+                        last_name: empAnswer[1]
                     },
                     {
-                        first_name: ansArray[1]
+                        first_name: empAnswer[2]
                     }
                 ], 
                 (err, res) => {
                     if (err) throw err;
-                    init();
+                    console.log(`
+                    ------ ${empAnswer[2]} ${empAnswer[1]}'s role is now ${roleAnswer[1]} ------
+                    `);
+                    initQueries();
                 }
             );
         });
-    })
-};
+}
 
 const updateManager  = () => {
-    connection.query("SELECT CONCAT_WS(', ', employee.last_name, employee.first_name) AS `Name`, employee.id AS `ID` FROM employee ORDER by `Name`", (err, results) => {
-        inquirer
-            .prompt([
-                {
-                    name: 'choice',
-                    type: 'list',
-                    choices() {
-                        const choiceArray = [];
-                        results.forEach(({ Name, ID }) => {
-                            choiceArray.push(`${Name}, ${ID}`);
-                        });
-                        return choiceArray;
+    inquirer
+        .prompt([
+            {
+                name: 'choice',
+                type: 'list',
+                choices: empArray,
+                message: 'Update manager for which employee?',
+            },
+            {
+                name: 'newManager',
+                type: 'list',
+                choices: managerArray,
+                message: 'Who would you like their new manager to be?',
+            }
+        ])
+        .then((answer) => {
+            let ansArrayChoice = answer.choice.split(':').join(',').split(', ')
+            let ansArrayManager = answer.newManager.split(':').join(',').split(', ')
+            const query = connection.query(
+                'UPDATE employee SET ? WHERE ?', 
+                [
+                    {
+                        manager_id: ansArrayManager[0]
                     },
-                    message: 'Update role for which employee?',
-                },
-                {name: 'newManager',
-                    type: 'list',
-                    choices() {
-                        const choiceArray = [];
-                        results.forEach(({ Name, ID }) => {
-                            choiceArray.push(`${Name}, ${ID}`);
-                        });
-                        return choiceArray;
+                    {
+                        id: ansArrayChoice[0]
                     },
-                    message: 'Who would you like their new manager to be?',
+                ], 
+                (err, res) => {
+                    if (err) throw err;
+                    console.log(`
+                    ------ ${ansArrayChoice[2]} ${ansArrayChoice[1]}'s manager is now ${ansArrayManager[2]} ${ansArrayManager[1]} ------
+                    `);
+                    initQueries();
                 }
-            ])
-            .then((answer) => {
-                let ansArrayChoice = answer.choice.split(', ')
-                let ansArrayManager = answer.newManager.split(', ')
-                const query = connection.query(
-                    'UPDATE employee SET ? WHERE ?', 
-                    [
-                        {
-                            manager_id: ansArrayManager[2]
-                        },
-                        {
-                            id: ansArrayChoice[2]
-                        },
-                    ], 
-                    (err, res) => {
-                        if (err) throw err;
-                        init();
-                    }
-                );
-            });
+            );
     })
 };
 
@@ -223,14 +184,23 @@ const viewCategory = () => {
         .then((answer) => {
             if (answer.view_type === "EMPLOYEE") {
                 queryString = "SELECT employee.id AS `ID`, CONCAT_WS(', ', employee.last_name, employee.first_name) AS `Name`, role.title AS `Role`, role.salary AS `Salary`, department.name AS `Department`, CONCAT_WS(', ', managerInfo.last_name, managerInfo.first_name) AS `Manager` FROM employee INNER JOIN role ON employee.role_id = role.id LEFT JOIN department on role.department_id = department.id LEFT JOIN employee AS managerInfo on employee.manager_id = managerInfo.id ORDER by `Name`;"
+                console.log(`
+                ------ Retrieving employees in order alphabetically ------
+                `)
                 connectionView(queryString)
             }
             else if (answer.view_type === "ROLE"){
                 queryString = 'SELECT role.id AS `ID`,  role.title AS `Role`, role.salary AS `Salary`, department.name AS `Department` FROM role INNER JOIN department on role.department_id = department.id ORDER BY `id`'
+                console.log(`
+                ------ Retrieving roles in order by ID ------
+                `)
                 connectionView(queryString)
             }
             else if (answer.view_type === "DEPARTMENT"){
                 queryString = 'SELECT department.id AS `ID`, department.name AS `Department` FROM department ORDER BY `ID`'
+                console.log(`
+                ------ Retrieving departments in order by ID ------`
+                )
                 connectionView(queryString)
             }
             else {
@@ -240,26 +210,20 @@ const viewCategory = () => {
 };
 
 const byManager  = () => {
-    connection.query("SELECT CONCAT_WS(', ', employee.last_name, employee.first_name) AS `Name`, employee.id AS `ID` FROM employee WHERE role_id = '12' ORDER by `Name`", (err, results) => {
         inquirer
             .prompt({   
-                        name: 'manager',
-                        type: 'list',
-                        choices() {
-                            const choiceArray = [];
-                            results.forEach(({ Name, ID }) => {
-                                choiceArray.push(`${Name}, ${ID}`);
-                            });
-                            return choiceArray;
-                        },
-                        message: 'View by which manager?'
-                    })
+                name: 'manager',
+                type: 'list',
+                choices: managerArray,
+                message: 'View by which manager?'
+            })
             .then((answer) => {
-                let ansArrayManager = answer.manager.split(', ')
-                const queryString = `SELECT employee.id AS 'ID', CONCAT_WS(', ', employee.last_name, employee.first_name) AS 'Name', role.title AS 'Role', role.salary AS 'Salary', department.name AS 'Department', CONCAT_WS(', ', managerInfo.last_name, managerInfo.first_name) AS 'Manager' FROM employee INNER JOIN role ON employee.role_id = role.id LEFT JOIN department on role.department_id = department.id LEFT JOIN employee AS managerInfo on employee.manager_id = managerInfo.id WHERE employee.manager_id = '${ansArrayManager[2]}' ORDER by 'Name'`
-                console.log(queryString)
+                let ansArrayManager = answer.manager.split(':').join(',').split(', ')
+                const queryString = `SELECT employee.id AS 'ID', CONCAT_WS(', ', employee.last_name, employee.first_name) AS 'Name', role.title AS 'Role', role.salary AS 'Salary', department.name AS 'Department', CONCAT_WS(', ', managerInfo.last_name, managerInfo.first_name) AS 'Manager' FROM employee INNER JOIN role ON employee.role_id = role.id LEFT JOIN department on role.department_id = department.id LEFT JOIN employee AS managerInfo on employee.manager_id = managerInfo.id WHERE employee.manager_id = '${ansArrayManager[0]}' ORDER by 'Name'`
+                console.log(`
+                ------ Retrieving employees managed by ${ansArrayManager[2]} ${ansArrayManager[1]} in order alphabetically ------
+                `)
                 connectionView(queryString)
-            });
     }); 
 }
 
@@ -267,7 +231,7 @@ const connectionView = (queryString) => {
     connection.query(queryString, (err, results) => {
         if (err) throw err;
         console.table(results)
-        init();
+        initQueries();
     })
 };
 
@@ -277,59 +241,151 @@ const addCategory = () => {
             name: "add_type",
             type: "list",
             message: "What category would you like to add?",
-            choices: ["DEPARTMENT", "ROLE", "EMPLOYEE", "CANCEL"]
+            choices: ["DEPARTMENT", "ROLE", "EMPLOYEE"]
         })
         .then((answer) => {
             if (answer.add_type === "DEPARTMENT") {
-                addQuery (answer, deptPrompt);
+                addDepartment ();
             } 
             else if (answer.add_type === "ROLE") {
-                addQuery (answer, rolePrompt);
+                addRole ();
             } 
             else if (answer.add_type === "EMPLOYEE") {
-                addQuery (answer, emplPrompt);
-            } 
-            else {
-                connection.end();
+                addEmployee ();
             }
         });
 };
 
-const addQuery = (answer, categoryPrompt) => {
-    const categoryAns = answer.add_type;
-    let setObj = []
-    inquirer.prompt(categoryPrompt)
+const addDepartment = () => {
+    inquirer.prompt([
+        {
+            name: 'dept_id',
+            type: 'input',
+            message: 'What is the department id number?'
+        },
+        {
+            name: 'dept_name',
+            type: 'input',
+            message: 'What is the department name?'
+        }
+    ])
     .then((answer) => {
-        if (categoryAns === "DEPARTMENT") {
-            setObj = {
+        console.log(`
+        ------ Department: ${answer.dept_name} is being created ------
+        `)
+        connection.query(
+            "INSERT INTO department SET ?",
+            {
                 id: answer.dept_id,
                 name: answer.dept_name
+            },
+            (err) => {
+                if (err) throw err;
+                console.log(`
+                -------- ${categoryAns} CREATED SUCESSFULLY --------
+                `);
+                initQueries();
             }
-        } 
-        else if (categoryAns === "ROLE") {
-            setObj = {
+        );
+    });
+};
+
+const addRole = () => {
+    inquirer.prompt([
+            {
+                name: 'role_id',
+                type: 'input',
+                message: 'What is the id for the role?'
+            },
+            {
+                name: 'role_title',
+                type: 'input',
+                message: 'What is the title of the role?'
+            },
+            {
+                name: 'salary',
+                type: 'input',
+                message: 'What is the salary for the role?'
+            },
+            {
+                name: 'dept_id',
+                type: 'list',
+                choices: deptArray,
+                message: 'Which department is this role in?'
+            }
+    ])
+    .then((answer) => {
+        console.log(`
+        ------ Role: ${answer.role_title} is being created ------
+        `)
+        connection.query(
+            "INSERT INTO role SET ?",
+            {
                 id: answer.role_id,
                 title: answer.role_title,
                 salary: answer.salary,
-                department_id: answer.dept_id
+                department_id: answer.dept_id.split(':').join(',').split(', ')[0]
+            },
+            (err) => {
+                if (err) throw err;
+                console.log(`
+                -------- ROLE CREATED SUCESSFULLY --------
+                `);
+                initQueries();
             }
-        } 
-        else if (categoryAns === "EMPLOYEE") {
-            setObj = {
+        );
+    });
+};
+
+const addEmployee = () => {
+    inquirer.prompt([
+        {
+            name: 'employee_id',
+            type: 'input',
+            message: 'What is their id number?'
+        },
+        {
+            name: 'first_name',
+            type: 'input',
+            message: 'What is their first name?'
+        },
+        {
+            name: 'last_name',
+            type: 'input',
+            message: 'What is their last name?'
+        },
+        {
+            name: 'role_id',
+            type: 'list',
+            choices: roleArray,
+            message: 'What is their role?'
+        },
+        {
+            name: 'manager',
+            type: 'list',
+            choices: managerArray,
+            message: 'Who is their manager?'
+        }
+    ])
+    .then((answer) => {
+        console.log(`
+        ------ Employee: ${answer.first_name} ${answer.last_name} is being created ------
+        `)
+        connection.query(
+            "INSERT INTO department SET ?",
+            {
                 id: answer.employee_id,
                 first_name: answer.first_name,
                 last_name: answer.last_name,
-                role_id: answer.role_id,
-                manager_id: answer.manager
-            }
-        } 
-        connection.query(
-            "INSERT INTO " + categoryAns + " SET ?",
-            setObj,
+                role_id: answer.role_id.split(':').join(',').split(', ')[0],
+                manager_id: answer.manager.split(':').join(',').split(', ')[0]
+            },
             (err) => {
                 if (err) throw err;
-                console.log(`${categoryAns} CREATED SUCESSFULLY.`);
-                init();
+                console.log(`
+                -------- EMPLOYEE CREATED SUCESSFULLY --------
+                `);
+                initQueries();
             }
         );
     });
@@ -337,5 +393,5 @@ const addQuery = (answer, categoryPrompt) => {
 
 connection.connect((err) => {
     if (err) throw err;
-    init ()
+    initQueries()
 });
