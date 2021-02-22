@@ -30,7 +30,7 @@ const initQueries = () => {
         });
         return roleArray;
     })
-    connection.query("SELECT CONCAT_WS(', ', employee.last_name, employee.first_name) AS `Name`, employee.id AS `ID` FROM employee WHERE employee.role_id = 12 ORDER by `Name`", (err, results) => {
+    connection.query("SELECT CONCAT_WS(', ', employee.last_name, employee.first_name) AS `Name`, employee.id AS `ID` FROM employee WHERE employee.role_id = 1 ORDER by `Name`", (err, results) => {
         managerArray = [];
         results.forEach(({ Name, ID }) => {
             managerArray.push(`${ID}: ${Name}`);
@@ -53,7 +53,7 @@ const init = () => {
             name: "action",
             type: "list",
             message: "What would you like to do?",
-            choices: ["ADD", "VIEW", "UPDATE", "END"]
+            choices: ["ADD", "VIEW", "UPDATE", "DELETE", "END"]
         })
         .then((answer) => {
             if (answer.action === "ADD") {
@@ -64,6 +64,9 @@ const init = () => {
             } 
             else if (answer.action === "UPDATE") {
                 updateCategory ();
+            } 
+            else if (answer.action === "DELETE") {
+                deleteEmployee ();
             } 
             else {
                 connection.end();
@@ -183,7 +186,7 @@ const viewCategory = () => {
         })
         .then((answer) => {
             if (answer.view_type === "EMPLOYEE") {
-                queryString = "SELECT employee.id AS `ID`, CONCAT_WS(', ', employee.last_name, employee.first_name) AS `Name`, role.title AS `Role`, role.salary AS `Salary`, department.name AS `Department`, CONCAT_WS(', ', managerInfo.last_name, managerInfo.first_name) AS `Manager` FROM employee INNER JOIN role ON employee.role_id = role.id LEFT JOIN department on role.department_id = department.id LEFT JOIN employee AS managerInfo on employee.manager_id = managerInfo.id ORDER by `Name`;"
+                queryString = "SELECT CONCAT_WS(', ', employee.last_name, employee.first_name) AS `Name`, role.title AS `Role`, role.salary AS `Salary`, department.name AS `Department`, CONCAT_WS(', ', managerInfo.last_name, managerInfo.first_name) AS `Manager` FROM employee INNER JOIN role ON employee.role_id = role.id LEFT JOIN department on role.department_id = department.id LEFT JOIN employee AS managerInfo on employee.manager_id = managerInfo.id ORDER by `Name`;"
                 console.log(`
                 ------ Retrieving employees in order alphabetically ------
                 `)
@@ -219,7 +222,7 @@ const byManager  = () => {
             })
             .then((answer) => {
                 let ansArrayManager = answer.manager.split(':').join(',').split(', ')
-                const queryString = `SELECT employee.id AS 'ID', CONCAT_WS(', ', employee.last_name, employee.first_name) AS 'Name', role.title AS 'Role', role.salary AS 'Salary', department.name AS 'Department', CONCAT_WS(', ', managerInfo.last_name, managerInfo.first_name) AS 'Manager' FROM employee INNER JOIN role ON employee.role_id = role.id LEFT JOIN department on role.department_id = department.id LEFT JOIN employee AS managerInfo on employee.manager_id = managerInfo.id WHERE employee.manager_id = '${ansArrayManager[0]}' ORDER by 'Name'`
+                const queryString = `SELECT CONCAT_WS(', ', employee.last_name, employee.first_name) AS 'Name', role.title AS 'Role', role.salary AS 'Salary', department.name AS 'Department', CONCAT_WS(', ', managerInfo.last_name, managerInfo.first_name) AS 'Manager' FROM employee INNER JOIN role ON employee.role_id = role.id LEFT JOIN department on role.department_id = department.id LEFT JOIN employee AS managerInfo on employee.manager_id = managerInfo.id WHERE employee.manager_id = '${ansArrayManager[0]}' ORDER by 'Name'`
                 console.log(`
                 ------ Retrieving employees managed by ${ansArrayManager[2]} ${ansArrayManager[1]} in order alphabetically ------
                 `)
@@ -259,11 +262,6 @@ const addCategory = () => {
 const addDepartment = () => {
     inquirer.prompt([
         {
-            name: 'dept_id',
-            type: 'input',
-            message: 'What is the department id number?'
-        },
-        {
             name: 'dept_name',
             type: 'input',
             message: 'What is the department name?'
@@ -276,13 +274,12 @@ const addDepartment = () => {
         connection.query(
             "INSERT INTO department SET ?",
             {
-                id: answer.dept_id,
                 name: answer.dept_name
             },
             (err) => {
                 if (err) throw err;
                 console.log(`
-                -------- ${categoryAns} CREATED SUCESSFULLY --------
+                -------- DEPARTMENT CREATED SUCESSFULLY --------
                 `);
                 initQueries();
             }
@@ -292,11 +289,6 @@ const addDepartment = () => {
 
 const addRole = () => {
     inquirer.prompt([
-            {
-                name: 'role_id',
-                type: 'input',
-                message: 'What is the id for the role?'
-            },
             {
                 name: 'role_title',
                 type: 'input',
@@ -321,7 +313,6 @@ const addRole = () => {
         connection.query(
             "INSERT INTO role SET ?",
             {
-                id: answer.role_id,
                 title: answer.role_title,
                 salary: answer.salary,
                 department_id: answer.dept_id.split(':').join(',').split(', ')[0]
@@ -339,11 +330,6 @@ const addRole = () => {
 
 const addEmployee = () => {
     inquirer.prompt([
-        {
-            name: 'employee_id',
-            type: 'input',
-            message: 'What is their id number?'
-        },
         {
             name: 'first_name',
             type: 'input',
@@ -372,9 +358,8 @@ const addEmployee = () => {
         ------ Employee: ${answer.first_name} ${answer.last_name} is being created ------
         `)
         connection.query(
-            "INSERT INTO department SET ?",
+            "INSERT INTO employee SET ?",
             {
-                id: answer.employee_id,
                 first_name: answer.first_name,
                 last_name: answer.last_name,
                 role_id: answer.role_id.split(':').join(',').split(', ')[0],
@@ -389,6 +374,48 @@ const addEmployee = () => {
             }
         );
     });
+};
+
+const deleteEmployee  = () => {
+    inquirer
+        .prompt([
+            {
+                name: 'choice',
+                type: 'list',
+                choices: empArray,
+                message: 'Delete which employee?',
+            },
+            {
+                name: 'confirmation',
+                type: 'list',
+                choices: ["DELETE", "CANCEL"],
+                message: 'Are you sure you want to delete? This action cannot be undone.',
+            }
+        ])
+        .then((answer) => {
+            let ansArrayChoice = answer.choice.split(':').join(',').split(', ')
+            if (answer.confirmation === "DELETE") {
+                const query = connection.query(
+                    'DELETE FROM employee WHERE ?', 
+                    [
+                        {
+                            id: ansArrayChoice[0]
+                        }
+                    ], 
+                    (err, res) => {
+                        if (err) throw err;
+                        console.log(`
+                        ------ ${ansArrayChoice[2]} ${ansArrayChoice[1]}'s info has been removed ------
+                        `);
+                        initQueries();
+                    }
+                );
+            }
+            else {
+                console.log ("------ Delete Cancelled ------")
+                initQueries();
+            }
+    })
 };
 
 connection.connect((err) => {
