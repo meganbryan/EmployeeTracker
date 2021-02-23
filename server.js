@@ -182,7 +182,7 @@ const viewCategory = () => {
             name: "view_type",
             type: "list",
             message: "What category would you like to view?",
-            choices: ["DEPARTMENT", "ROLE", "EMPLOYEE", "BY MANAGER"]
+            choices: ["DEPARTMENT", "ROLE", "EMPLOYEE", "BY MANAGER", "DEPARTMENT BUDGETS"]
         })
         .then((answer) => {
             if (answer.view_type === "EMPLOYEE") {
@@ -205,6 +205,9 @@ const viewCategory = () => {
                 ------ Retrieving departments in order by ID ------`
                 )
                 connectionView(queryString)
+            }
+            else if (answer.view_type === "DEPARTMENT BUDGETS"){
+                departmentTotal ()
             }
             else {
                 byManager() 
@@ -417,6 +420,34 @@ const deleteEmployee  = () => {
             }
     })
 };
+
+const departmentTotal = () => {
+    inquirer
+        .prompt({   
+            name: 'department',
+            type: 'list',
+            choices: deptArray,
+            message: 'View budget for which department?'
+        })
+        .then((answer) => {
+            let ansArrayDept = answer.department.split(':').join(',').split(', ')
+            const query = connection.query(
+                "SELECT SUM (role.salary) AS `total` FROM role WHERE ?", 
+                [
+                    {
+                        department_id: ansArrayDept[0]
+                    }
+                ], 
+                (err, results) => {
+                    if (err) throw err;
+                    console.log(`
+                    ------ The total budget for ${ansArrayDept[1]} is $${results[0].total} ------
+                    `);
+                    initQueries();
+                }
+            );
+    }); 
+}
 
 connection.connect((err) => {
     if (err) throw err;
