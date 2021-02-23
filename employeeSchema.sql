@@ -27,16 +27,28 @@ INSERT INTO
 employee (first_name, last_name, role_id, manager_id)
 VALUES 
 ("Megan", "Bryan", 1, null),
-("Laura", "Smith", 3, 1),
+("Laura", "Smith", 1, 1),
 ("Jack", "Sherman", 2, 2),
-("Lucy", "Lippincott", 3, 2);
+("Tyler", "Whitman", 3, 1),
+("Sean", "Jensen", 4, 2),
+("Jessica", "Young", 5, 1),
+("Heather", "Ford", 6, 2),
+("Liam", "Phillips", 5, 1),
+("Brian", "Eberly", 3, 2),
+("Lucy", "Lippincott", 3, 1);
 
 INSERT INTO role 
 (title, salary, department_id)
 VALUES 
-("Manager", "70000", 1),
-("Engineer", "60000", 1),
+("Manager", "90000", 2),
+("Engineer", "60000", 2),
+("Designer", "70000", 2),
+("Contractor", "85000", 1),
+("Maintenance", "65000", 1),
 ("Mechanic", "50000", 1);
 
-INSERT INTO department (name)
-VALUES ("Production");
+INSERT INTO 
+department (name)
+VALUES 
+("Production"),
+("Design");
